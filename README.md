@@ -11,6 +11,8 @@ Stack simples para executar o Hermes Agent no Portainer com dashboard e API publ
 
 Não há bind mounts, serviços de inicialização, `cron` ou necessidade de clonar o repositório na VPS.
 
+Na primeira execução em um volume novo, a Stack cria o **Hermes Admin Principal**. Pelo dashboard, ele conduz um onboarding seguro e conversacional para criar o perfil `atendimento`, definir regras, conectar canais e instalar skills conforme sua aprovação.
+
 ## Pré-requisito único
 
 O Traefik já precisa usar uma rede overlay externa chamada `network_public`. Confirme no nó manager:
@@ -43,6 +45,16 @@ API_SERVER_CORS_ORIGINS=https://app.seudominio.com.br
 ```
 
 `ANTHROPIC_API_KEY` é opcional. Se nenhum frontend no navegador acessar diretamente a API, deixe `API_SERVER_CORS_ORIGINS` vazio. Não use `*`.
+
+## Onboarding no dashboard
+
+1. Abra `https://<DOMAIN_DASHBOARD>` e entre com as credenciais definidas.
+2. Abra o chat do perfil principal e escreva: **“Inicie meu onboarding.”**
+3. O Admin Principal fará uma pergunta por vez e só criará o perfil `atendimento` ou ativará integrações após sua aprovação.
+4. Informe segredos somente nos campos seguros do Portainer ou das integrações; nunca no chat.
+5. Antes de liberar automações reais, peça um teste controlado e revise o resumo de permissões fornecido pelo Admin.
+
+O onboarding é gravado uma única vez no volume `hermes_data`; atualizações da Stack não substituem a personalidade que você já personalizou.
 
 ## DNS e acesso
 
