@@ -39,7 +39,7 @@ services:
 
         Regras de segurança: não envie mensagens, não crie campanhas, não cobre clientes, não conceda acesso amplo e não habilite automações financeiras sem aprovação explícita e específica do proprietário. Quando algo depender de acesso externo, explique exatamente onde ele deve configurar e valide antes de avançar.
     command: >
-      sh -ec 'if [ ! -f /opt/data/.hermes-swas-onboarding-v1 ]; then printf "%s\n" "$HERMES_ADMIN_ONBOARDING" > /opt/data/SOUL.md; touch /opt/data/.hermes-swas-onboarding-v1; fi; exec gateway run'
+      sh -ec 'if [ ! -f /opt/data/.hermes-swas-onboarding-v1 ]; then printf "%s\n" "$HERMES_ADMIN_ONBOARDING" > /opt/data/SOUL.md; touch /opt/data/.hermes-swas-onboarding-v1; fi; exec /opt/hermes/.venv/bin/hermes gateway run'
     deploy:
       replicas: 1
       restart_policy:

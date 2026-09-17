@@ -83,6 +83,8 @@ docker service logs --raw --tail 100 NOME_DA_STACK_hermes_agent
 
 O serviço deve ficar com `1/1` réplicas. Para atualizar o Hermes, use **Pull and redeploy** no Portainer.
 
+Se os logs indicarem que `config.yaml` é muito antigo para migrar, a Stack está reutilizando um volume `hermes_data` de uma instalação anterior. Faça backup antes de decidir entre executar `hermes setup` para regenerar a configuração ou remover o volume e iniciar uma instalação nova.
+
 ## Segurança
 
 - Nunca envie `.env` ou chaves ao Git.
