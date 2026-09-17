@@ -1,0 +1,138 @@
+version: "3.8"
+
+services:
+  # BOT 1: Vendedor (atendimento) — acesso somente leitura aos artefatos.
+  hermes_atendimento:
+    image: nousresearch/hermes-agent:v2026.8.19
+    tty: true
+    stdin_open: true
+    volumes:
+      - hermes_agent_data:/opt/data
+      - hermes_configs:/opt/configs:ro
+      - hermes_skills:/opt/skills:ro
+      - hermes_prompts:/opt/prompts:ro
+    networks:
+      - network_public
+    environment:
+      TZ: America/Sao_Paulo
+      HERMES_PROFILE: atendimento
+      HERMES_CONFIG: /opt/configs/atendimento.toml
+      COMPOSIO_API_KEY: ${COMPOSIO_API_KEY:?Defina COMPOSIO_API_KEY no .env}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Defina OPENAI_API_KEY no .env}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+    command: >
+      sh -ec 'until [ -f /opt/configs/atendimento.toml ]; do sleep 1; done; exec gateway run --config /opt/configs/atendimento.toml'
+    depends_on:
+      hermes_init:
+        condition: service_completed_successfully
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1.0"
+
+  # BOT 2: Admin (cérebro) — acesso de escrita aos artefatos e dados.
+  hermes_admin:
+    image: nousresearch/hermes-agent:v2026.8.19
+    tty: true
+    stdin_open: true
+    volumes:
+      - hermes_agent_data:/opt/data
+      - hermes_configs:/opt/configs
+      - hermes_skills:/opt/skills
+      - hermes_prompts:/opt/prompts
+    networks:
+      - network_public
+    environment:
+      TZ: America/Sao_Paulo
+      HERMES_PROFILE: admin
+      HERMES_CONFIG: /opt/configs/admin.toml
+      COMPOSIO_API_KEY: ${COMPOSIO_API_KEY:?Defina COMPOSIO_API_KEY no .env}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Defina OPENAI_API_KEY no .env}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      HERMES_DASHBOARD: "1"
+      HERMES_DASHBOARD_HOST: 0.0.0.0
+      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${DASHBOARD_USERNAME:?Defina DASHBOARD_USERNAME no .env}
+      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${DASHBOARD_PASS:?Defina DASHBOARD_PASS no .env}
+      HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${DASHBOARD_SECRET:?Defina DASHBOARD_SECRET no .env}
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: 0.0.0.0
+      API_SERVER_KEY: ${API_SERVER_KEY:?Defina API_SERVER_KEY no .env}
+      API_SERVER_CORS_ORIGINS: ${API_SERVER_CORS_ORIGINS:-}
+    command: >
+      sh -ec 'until [ -f /opt/configs/admin.toml ]; do sleep 1; done; echo "* * * * * python3 /opt/skills/handoff_controller.py --check >> /tmp/cron.log 2>&1" | crontab - && cron && exec gateway run --config /opt/configs/admin.toml'
+    depends_on:
+      hermes_init:
+        condition: service_completed_successfully
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2.0"
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.hermes_dashboard.rule=Host(`${DOMAIN_DASHBOARD:?Defina DOMAIN_DASHBOARD no .env}`)
+        - traefik.http.routers.hermes_dashboard.entrypoints=websecure
+        - traefik.http.routers.hermes_dashboard.tls.certresolver=letsencryptresolver
+        - traefik.http.services.hermes_dashboard.loadbalancer.server.port=9119
+        - traefik.http.services.hermes_dashboard.loadbalancer.passHostHeader=true
+        - traefik.http.routers.hermes_api.rule=Host(`${DOMAIN_API:?Defina DOMAIN_API no .env}`)
+        - traefik.http.routers.hermes_api.entrypoints=websecure
+        - traefik.http.routers.hermes_api.tls.certresolver=letsencryptresolver
+        - traefik.http.services.hermes_api.loadbalancer.server.port=8642
+        - traefik.http.services.hermes_api.loadbalancer.passHostHeader=true
+        - traefik.http.middlewares.hermes_ratelimit.ratelimit.average=20
+        - traefik.http.middlewares.hermes_ratelimit.ratelimit.burst=40
+        - traefik.http.routers.hermes_dashboard.middlewares=hermes_ratelimit
+        - traefik.http.routers.hermes_api.middlewares=hermes_ratelimit
+
+  # Popula os volumes nomeados a partir do pacote versionado neste repositório.
+  hermes_init:
+    image: alpine:3.18
+    volumes:
+      - hermes_configs:/configs
+      - hermes_skills:/skills
+      - hermes_prompts:/prompts
+      - ${HERMES_REPO_PATH:?Defina HERMES_REPO_PATH no .env}/configs:/seed/configs:ro
+      - ${HERMES_REPO_PATH:?Defina HERMES_REPO_PATH no .env}/skills:/seed/skills:ro
+      - ${HERMES_REPO_PATH:?Defina HERMES_REPO_PATH no .env}/prompts:/seed/prompts:ro
+    command: >
+      sh -ec 'cp -a /seed/configs/. /configs/ && cp -a /seed/skills/. /skills/ && cp -a /seed/prompts/. /prompts/ && ls -R /configs /skills /prompts'
+    deploy:
+      restart_policy:
+        condition: none
+      placement:
+        constraints:
+          - node.role == manager
+
+volumes:
+  hermes_agent_data:
+    external: true
+    name: hermes_agent_data
+  hermes_configs:
+    name: hermes_configs
+  hermes_skills:
+    name: hermes_skills
+  hermes_prompts:
+    name: hermes_prompts
+
+networks:
+  network_public:
+    external: true
+    name: network_public

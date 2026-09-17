@@ -1,0 +1,74 @@
+[profile]
+name = "admin"
+
+[terminal]
+backend = "docker"
+cwd = "/opt/data/sandbox"
+
+[security]
+read_only = false
+checkpoints = true
+
+[tools]
+allow_all = true
+
+[phase1]
+enabled = true
+name = "Operacao Base - R$697"
+integrations = ["whatsapp", "instagram", "google_calendar", "google_sheets", "meta_ads_read"]
+
+[skills.handoff_controller]
+enabled = true
+path = "/opt/skills/handoff_controller.py"
+
+[skills.agenda_bot]
+enabled = true
+description = "Bloqueia agenda, remarca, confirma"
+
+[skills.sheets_logger]
+enabled = true
+description = "Toda venda cai na planilha"
+
+[phase2]
+enabled = true
+name = "Aquisicao + Cobranca - R$1497"
+integrations = ["google_ads", "asaas", "serpapi", "apify_facebook_ads_library"]
+
+[skills.ads_manager]
+enabled = true
+path = "/opt/skills/ads_manager.py"
+report_time = "08:00"
+commands = ["/ads", "/pausar", "/duplicar", "/cpl"]
+
+[skills.competitor_spy]
+enabled = true
+path = "/opt/skills/competitor_spy.py"
+run_at = "19:00"
+
+[skills.cobranca_bot]
+enabled = true
+path = "/opt/skills/cobranca_bot.py"
+commands = ["/caixa", "/cobrar", "/inadimplentes"]
+
+[phase3]
+enabled = true
+name = "Inteligencia e Criacao - R$2997"
+integrations = ["google_trends", "tiktok_search", "openai_image_gen", "notion"]
+
+[skills.creative_factory]
+enabled = true
+path = "/opt/skills/creative_factory.py"
+commands = ["/criar", "/ideia"]
+
+[skills.estrategista_domingo]
+enabled = true
+path = "/opt/skills/estrategista_domingo.py"
+run_at = "SUNDAY 20:00"
+prompt_file = "/opt/prompts/relatorio_domingo.txt"
+
+[mcp_servers.composio]
+command = "npx"
+args = ["@composio/mcp@latest"]
+
+[mcp_servers.composio.tools]
+allow = ["whatsapp_send", "instagram_send_dm", "instagram_reply_comment", "meta_ads_get_insights", "meta_ads_pause_ad", "meta_ads_create_campaign", "google_ads_get_insights", "google_calendar_check", "google_calendar_create", "google_sheets_append", "google_sheets_read", "asaas_create_charge", "asaas_get_charges", "serpapi_search", "google_trends_get", "apify_facebook_ads_library"]

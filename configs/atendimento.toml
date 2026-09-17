@@ -1,0 +1,37 @@
+[profile]
+name = "atendimento"
+
+[security]
+read_only = true
+sandbox_enabled = true
+skill_evaluator = true
+max_file_read_size = 1024
+
+[tools]
+allow = ["whatsapp_send", "whatsapp_get_messages", "instagram_send_dm", "instagram_get_dms", "instagram_reply_comment", "instagram_get_comments", "instagram_get_followers", "google_calendar_check", "google_calendar_create", "google_sheets_append", "knowledge_search", "escalate_to_admin", "whatsapp_pause", "handoff_controller"]
+deny = ["terminal", "file_write", "file_read_root", "ssh", "skill_install", "exec", "git"]
+
+[handoff.default]
+mode = "timer"
+auto_resume_after = 7200
+resume_message = "O responsável precisou sair, vi tudo que conversaram. Posso continuar? 👋"
+
+[handoff.manual]
+auto_resume_after = 0
+resume_command = "/liberar"
+
+[handoff.timer]
+auto_resume_after = 7200
+
+[handoff.smart]
+auto_resume_after = 900
+trigger_words = ["pode assumir", "volta bot", "assume", "libera bot", "pode voltar"]
+
+[mcp_servers.composio]
+command = "npx"
+args = ["@composio/mcp@latest"]
+
+[instagram.rules]
+dm_new_follower_delay = 600
+max_dm_per_hour = 30
+comment_reply_variations = ["Te chamei na DM 😉", "Olha sua DM! 👇", "Te mandei mensagem lá!"]
