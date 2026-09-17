@@ -143,6 +143,7 @@ O prefixo `hermes_` corresponde ao nome sugerido para a Stack. Ajuste os comando
 | --- | --- |
 | `hermes_init` falha ao montar arquivos | Confirme que `/opt/hermes-swas/configs`, `/opt/hermes-swas/skills` e `/opt/hermes-swas/prompts` existem no nó manager e que `HERMES_REPO_PATH` está correto. |
 | Serviço não inicia | Confira no Portainer se todas as variáveis obrigatórias foram incluídas; `COMPOSIO_API_KEY` vazia interrompe o deploy intencionalmente. |
+| `crontab: not found` no `hermes_admin` | Atualize a Stack para a versão atual deste repositório. O agendador usa um loop interno e não depende de `cron` ou `crontab` na imagem. |
 | Traefik retorna 404 | Verifique DNS, a existência da rede `network_public`, os domínios configurados e se o Traefik usa o provider Swarm. |
 | Traefik retorna 502 | Veja os logs de `hermes_admin`; confirme que as portas internas `9119` e `8642` são as esperadas pela imagem do Hermes Agent. |
 | Alterações em `skills` não aparecem | Atualize o repositório na VPS e faça **Update the stack** no Portainer para executar novamente o `hermes_init`. |
@@ -153,3 +154,7 @@ O prefixo `hermes_` corresponde ao nome sugerido para a Stack. Ajuste os comando
 - Prefira Docker Secrets ou o gerenciamento de secrets do Portainer para produção.
 - Mantenha o `.env` fora do versionamento.
 - Restrinja `API_SERVER_CORS_ORIGINS` às origens confiáveis; não use `*` para uma API exposta publicamente.
+
+### Dados persistentes existentes
+
+O volume externo `hermes_agent_data` é preservado entre deploys. Se os logs indicarem que `/opt/data/.env` está sobrescrevendo uma variável da Stack ou que `/opt/data/config.yaml` é muito antigo, revise esses arquivos antes de remover o volume. A remoção do volume apaga dados persistentes e só deve ser feita após backup e confirmação de que eles não são mais necessários.
