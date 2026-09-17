@@ -2,6 +2,8 @@
 
 Stack simples para executar o Hermes Agent no Portainer com dashboard e API publicados pelo Traefik.
 
+A Stack usa `nousresearch/hermes-agent:latest`. Para receber uma nova versão, use **Pull and redeploy** no Portainer; o volume `hermes_data` preserva configurações, sessões, skills e memórias entre atualizações.
+
 ## O que esta Stack cria
 
 - Um único serviço `hermes_agent` no nó manager do Swarm.
@@ -79,7 +81,7 @@ docker service ls
 docker service logs --raw --tail 100 NOME_DA_STACK_hermes_agent
 ```
 
-O serviço deve ficar com `1/1` réplicas. Para atualizar, use **Pull and redeploy** no Portainer.
+O serviço deve ficar com `1/1` réplicas. Para atualizar o Hermes, use **Pull and redeploy** no Portainer.
 
 ## Segurança
 
