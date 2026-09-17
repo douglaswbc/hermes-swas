@@ -4,7 +4,7 @@ Stack Docker Swarm para executar os perfis `atendimento` e `admin` do Hermes Age
 
 ## Arquitetura
 
-- `hermes_init`: copia `configs`, `skills` e `prompts` do repositório para volumes Docker.
+- `hermes_init`: copia `configs`, `skills` e `prompts` do repositório para volumes Docker. Os agentes aguardam esses arquivos antes de iniciar, o que também funciona no Swarm.
 - `hermes_atendimento`: perfil de atendimento, com os artefatos montados como somente leitura.
 - `hermes_admin`: perfil administrativo, com dashboard na porta interna `9119` e API na porta interna `8642`.
 - `network_public`: rede overlay externa já usada pelo Traefik.

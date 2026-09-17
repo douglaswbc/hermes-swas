@@ -23,9 +23,6 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     command: >
       sh -ec 'until [ -f /opt/configs/atendimento.toml ]; do sleep 1; done; exec gateway run --config /opt/configs/atendimento.toml'
-    depends_on:
-      hermes_init:
-        condition: service_completed_successfully
     deploy:
       replicas: 1
       restart_policy:
@@ -70,9 +67,6 @@ services:
       API_SERVER_CORS_ORIGINS: ${API_SERVER_CORS_ORIGINS:-}
     command: >
       sh -ec 'until [ -f /opt/configs/admin.toml ]; do sleep 1; done; echo "* * * * * python3 /opt/skills/handoff_controller.py --check >> /tmp/cron.log 2>&1" | crontab - && cron && exec gateway run --config /opt/configs/admin.toml'
-    depends_on:
-      hermes_init:
-        condition: service_completed_successfully
     deploy:
       replicas: 1
       restart_policy:
