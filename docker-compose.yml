@@ -1,83 +1,45 @@
-version: "3.8"
+version: "3.7"
 
 services:
   hermes_agent:
-    image: nousresearch/hermes-agent:latest
+    image: nousresearch/hermes-agent:v2026.8.19
     tty: true
     stdin_open: true
     volumes:
-      - hermes_data:/opt/data
+      - hermes_agent_data:/opt/data
     networks:
       - network_public
     environment:
-      TZ: America/Sao_Paulo
-      OPENAI_API_KEY: ${OPENAI_API_KEY:?Defina OPENAI_API_KEY no Portainer}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      HERMES_DASHBOARD: "1"
-      HERMES_DASHBOARD_HOST: 0.0.0.0
-      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${DASHBOARD_USERNAME:?Defina DASHBOARD_USERNAME no Portainer}
-      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${DASHBOARD_PASS:?Defina DASHBOARD_PASS no Portainer}
-      HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${DASHBOARD_SECRET:?Defina DASHBOARD_SECRET no Portainer}
-      API_SERVER_ENABLED: "true"
-      API_SERVER_HOST: 0.0.0.0
-      API_SERVER_KEY: ${API_SERVER_KEY:?Defina API_SERVER_KEY no Portainer}
-      API_SERVER_CORS_ORIGINS: ${API_SERVER_CORS_ORIGINS:-}
-      HERMES_ADMIN_ONBOARDING: |
-        Você é o Hermes Admin Principal desta operação. Seu primeiro dever é conduzir o proprietário por um onboarding conversacional, claro e seguro pelo dashboard.
-
-        Comece identificando que a instalação é nova e proponha um checklist. Faça uma pergunta por vez, confirme decisões e mantenha um resumo do que já foi definido.
-
-        Objetivo do onboarding:
-        1. Confirmar objetivo do negócio, idioma, público e tom de atendimento.
-        2. Confirmar o provedor e o modelo de IA configurados.
-        3. Criar pelo dashboard um perfil separado chamado "atendimento" somente quando o proprietário aprovar.
-        4. Configurar no perfil de atendimento regras de escalonamento para o Admin Principal, horários de atendimento, limites e situações em que deve pedir ajuda humana.
-        5. Orientar a conexão dos canais e integrações necessários, como WhatsApp, Instagram, agenda, planilhas, anúncios e cobrança. Explique pré-requisitos e peça aprovação antes de ativar cada integração.
-        6. Instalar e configurar apenas as skills necessárias pelo painel; não trate scripts Python soltos como skills instaladas.
-        7. Revisar segurança: chaves devem ser inseridas pelo proprietário nos campos seguros da Stack ou nas telas próprias; nunca peça que colem segredos no chat, em prompts ou em arquivos de texto.
-        8. Ao final, apresente um resumo, pendências e um plano de teste seguro antes de qualquer envio real de mensagens, criação de campanha ou cobrança.
-
-        Regras de segurança: não envie mensagens, não crie campanhas, não cobre clientes, não conceda acesso amplo e não habilite automações financeiras sem aprovação explícita e específica do proprietário. Quando algo depender de acesso externo, explique exatamente onde ele deve configurar e valide antes de avançar.
-    command: >
-      sh -ec 'if [ ! -f /opt/data/.hermes-swas-onboarding-v1 ]; then printf "%s\n" "$HERMES_ADMIN_ONBOARDING" > /opt/data/SOUL.md; touch /opt/data/.hermes-swas-onboarding-v1; fi; exec /opt/hermes/.venv/bin/hermes gateway run'
+      - TZ=America/Sao_Paulo
+      - HERMES_DASHBOARD=1
+      - HERMES_DASHBOARD_HOST=0.0.0.0
+      - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
+      - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=${DASHBOARD_PASS}
+      - HERMES_DASHBOARD_BASIC_AUTH_SECRET=${DASHBOARD_SECRET}
+      - API_SERVER_ENABLED=true
+      - API_SERVER_HOST=0.0.0.0
+      - API_SERVER_KEY=${API_SERVER_KEY}
+      - COMPOSIO_API_KEY=${COMPOSIO_API_KEY}
+    command: ["gateway", "run"]
     deploy:
-      replicas: 1
-      restart_policy:
-        condition: any
-        delay: 5s
-        max_attempts: 5
-        window: 120s
-      update_config:
-        order: start-first
-        failure_action: rollback
       placement:
         constraints:
           - node.role == manager
-      resources:
-        limits:
-          memory: 4G
-          cpus: "2.0"
       labels:
         - traefik.enable=true
-        - traefik.docker.network=network_public
-        - traefik.http.routers.hermes-dashboard.rule=Host(`${DOMAIN_DASHBOARD:?Defina DOMAIN_DASHBOARD no Portainer}`)
-        - traefik.http.routers.hermes-dashboard.entrypoints=websecure
-        - traefik.http.routers.hermes-dashboard.tls.certresolver=letsencryptresolver
-        - traefik.http.routers.hermes-dashboard.service=hermes-dashboard
-        - traefik.http.services.hermes-dashboard.loadbalancer.server.port=9119
-        - traefik.http.routers.hermes-api.rule=Host(`${DOMAIN_API:?Defina DOMAIN_API no Portainer}`)
-        - traefik.http.routers.hermes-api.entrypoints=websecure
-        - traefik.http.routers.hermes-api.tls.certresolver=letsencryptresolver
-        - traefik.http.routers.hermes-api.service=hermes-api
-        - traefik.http.services.hermes-api.loadbalancer.server.port=8642
-        - traefik.http.middlewares.hermes-ratelimit.ratelimit.average=10
-        - traefik.http.middlewares.hermes-ratelimit.ratelimit.burst=20
-        - traefik.http.routers.hermes-dashboard.middlewares=hermes-ratelimit
-        - traefik.http.routers.hermes-api.middlewares=hermes-ratelimit
+        - traefik.http.routers.hermes_dashboard.rule=Host(`hermes.autofunil.com.br`)
+        - traefik.http.routers.hermes_dashboard.entrypoints=websecure
+        - traefik.http.routers.hermes_dashboard.tls.certresolver=letsencryptresolver
+        - traefik.http.services.hermes_dashboard.loadbalancer.server.port=9119
+        - traefik.http.routers.hermes_api.rule=Host(`hermes-api.autofunil.com.br`)
+        - traefik.http.routers.hermes_api.entrypoints=websecure
+        - traefik.http.routers.hermes_api.tls.certresolver=letsencryptresolver
+        - traefik.http.services.hermes_api.loadbalancer.server.port=8642
 
 volumes:
-  hermes_data:
-    name: hermes_data
+  hermes_agent_data:
+    external: true
+    name: hermes_agent_data
 
 networks:
   network_public:
